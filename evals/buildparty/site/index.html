@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BuildParty · deterministic WebMCP evaluation</title>
+  <style>
+    :root{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#182019;background:#f3f1e8}*{box-sizing:border-box}body{margin:0}main{width:min(920px,calc(100% - 32px));margin:32px auto;display:grid;grid-template-columns:1fr 320px;gap:28px}section,aside{background:#fff;border:1px solid #aaa58f;padding:22px}h1{margin:0 0 8px;font:700 32px/1.1 system-ui}h2{font-size:14px;margin:24px 0 10px}.flow{color:#556057}.state{display:inline-block;padding:5px 8px;background:#173d2b;color:white}.tools{display:grid;gap:8px}button,select{font:inherit;width:100%;padding:9px;border:1px solid #173d2b;background:white;text-align:left;cursor:pointer}button:hover{background:#e7efe9}button.infrastructure{border-style:dashed;color:#705315}pre{white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;background:#eeece2;padding:12px;font-size:11px}.status{font-size:12px;line-height:1.5;color:#556057}.error{color:#9b2929}@media(max-width:720px){main{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>BuildParty</h1>
+    <p class="flow">No party → Initialized → In review ⇄ Revising → Finalized</p>
+    <p>Authoritative deterministic model of zero-to-200-block artifact v1, capability roles, archived feedback, complete revision snapshots and restore, pruning, and immutable final source plus shared state.</p>
+    <h2>Resolved state</h2><strong class="state" id="state">loading</strong>
+    <h2>Available actions</h2><div class="tools" id="tools"></div>
+    <h2>Supporting infrastructure</h2><p class="status">Dashed actions model the human-only feedback route or the v1 harness's single-action full journey. They are never registered with native WebMCP.</p><div class="tools" id="infrastructure"></div>
+  </section>
+  <aside>
+    <h2>Native WebMCP</h2><p class="status" id="native">Checking support…</p>
+    <h2>Reset deterministic fixture</h2><select id="fixture"></select>
+    <h2>Authoritative state</h2><pre id="evidence">Loading…</pre>
+    <p class="status error" id="error" aria-live="polite"></p>
+    <p><a href="/">Evaluation dashboard</a></p>
+  </aside>
+</main>
+<script>
+  const PUBLIC_TOOLS = new Set(['init','create_party','get_party','set_artifact','update_blocks','delete_blocks','restore_revision','get_feedback','respond_to_feedback','finalize_party','get_final_artifact']);
+  let project, snapshot, registrations;
+  const $ = id => document.getElementById(id);
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  async function request(url, options) {
+    const response = await fetch(url, options), body = await response.json();
+    if (!response.ok) throw new Error(body.error || `Request failed: ${response.status}`);
+    return body;
+  }
+
+  function taskFor(tool) {
+    const transition = project.transitions.find(item => item.source === snapshot.resolved_state && item.tool === tool);
+    return transition && project.tasks.find(item => item.status === 'active' && item.transition_id === transition.id);
+  }
+
+  function render() {
+    $('state').textContent = snapshot.resolved_state;
+    $('evidence').textContent = JSON.stringify(snapshot.state, null, 2);
+    $('fixture').value = snapshot.resolved_state;
+    const definitions = new Map(project.tools.map(tool => [tool.id, tool]));
+    for (const [target, infrastructure] of [['tools', false], ['infrastructure', true]]) {
+      const names = snapshot.tools.filter(name => PUBLIC_TOOLS.has(name) !== infrastructure);
+      $(target).innerHTML = names.length ? names.map(name => `<button type="button" data-tool="${escapeHtml(name)}" class="${infrastructure?'infrastructure':''}">${escapeHtml(definitions.get(name).title)}</button>`).join('') : '<span class="status">None in this state.</span>';
+      $(target).querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => invoke(button.dataset.tool, taskFor(button.dataset.tool)?.inputs || {}).catch(showError)));
+    }
+  }
+
+  function showError(error) { $('error').textContent = error.message; }
+
+  async function invoke(name, input = {}) {
+    snapshot = await request(`/api/demo/tools/${encodeURIComponent(name)}`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
+    $('error').textContent = '';
+    render();
+    return snapshot;
+  }
+
+  async function reset(state) {
+    snapshot = await request('/api/demo/reset', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state})});
+    $('error').textContent = '';
+    render();
+  }
+
+  async function syncWebMCP() {
+    if (registrations) return;
+    if (!window.isSecureContext || typeof document.modelContext?.registerTool !== 'function') {
+      $('native').textContent = 'Unavailable here; manual controls use the same same-origin bench API.';
+      return;
+    }
+    const controller = new AbortController();
+    registrations = controller;
+    const definitions = new Map(project.tools.map(tool => [tool.id, tool]));
+    const names = [...PUBLIC_TOOLS].filter(name => definitions.has(name));
+    try {
+      await Promise.all(names.map(name => {
+        const definition = definitions.get(name);
+        return document.modelContext.registerTool({
+          name: definition.id,
+          title: definition.title,
+          description: definition.description,
+          inputSchema: definition.input_schema,
+          annotations: {readOnlyHint: !definition.mutates},
+          async execute(input = {}) { return invoke(definition.id, input); }
+        }, {signal: controller.signal});
+      }));
+      if (controller.signal.aborted) return;
+      const discovered = await document.modelContext.getTools();
+      const active = discovered.map(tool => tool.name).filter(name => names.includes(name));
+      $('native').textContent = active.length ? `Registered for this document: ${active.join(', ')}` : 'No public tools registered.';
+    } catch (error) {
+      controller.abort(); registrations = undefined; showError(error);
+    }
+  }
+
+  async function start() {
+    [project, snapshot] = await Promise.all([request('/api/project'), request('/api/demo/state')]);
+    $('fixture').innerHTML = project.states.map(state => `<option value="${escapeHtml(state.id)}">${escapeHtml(state.name)}</option>`).join('');
+    $('fixture').addEventListener('change', event => reset(event.target.value).catch(showError));
+    render();
+    await syncWebMCP();
+    window.__buildPartyBench = {invoke, reset, get snapshot(){return snapshot}};
+  }
+  start().catch(showError);
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    command: ["postgres", "-c", "wal_level=logical"]
+    environment:
+      POSTGRES_USER: buildparty
+      POSTGRES_PASSWORD: buildparty
+      POSTGRES_DB: buildparty
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buildparty"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    volumes:
+      - buildparty_pg:/var/lib/postgresql/data
+
+  electric:
+    image: electricsql/electric:1.7.12
+    environment:
+      DATABASE_URL: postgresql://buildparty:buildparty@postgres:5432/buildparty?sslmode=disable
+      ELECTRIC_SECRET: buildparty-local-electric-secret-change-me
+      ELECTRIC_STORAGE_DIR: /var/lib/electric
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/v1/health"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    volumes:
+      - buildparty_electric:/var/lib/electric
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://buildparty:buildparty@postgres:5432/buildparty
+      ELECTRIC_URL: http://electric:3000
+      ELECTRIC_SECRET: buildparty-local-electric-secret-change-me
+      PUBLIC_ORIGIN: http://localhost:5173
+      PORT: "3001"
+    ports:
+      - "127.0.0.1:${API_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      electric:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/health').then(r => { if (!r.ok) process.exit(1) })"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+volumes:
+  buildparty_pg:
+  buildparty_electric:

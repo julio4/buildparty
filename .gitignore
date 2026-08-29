@@ -1,0 +1,11 @@
+.DS_Store
+.memory/
+node_modules/
+dist/
+.env
+coverage/
+test-results/
+*.tar
+*.tar.sha256
+!db/
+!db/*.sql

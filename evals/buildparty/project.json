@@ -1,0 +1,2648 @@
+{
+  "id": "buildparty",
+  "name": "BuildParty deterministic workflow",
+  "version": "spec-3",
+  "description": "Production-parity BuildParty evaluation. Public native surface is exactly eleven WebMCP operations. human_fixture_add_feedback models the production human-only comment route; eval_full_journey is composite supporting infrastructure required by the v1 single-action harness. Production uses PostgreSQL transactions, authenticated bearer capabilities/participant tokens, generated UUIDs/timestamps, and rendered portable HTML; this bundle uses deterministic authoritative fixtures while preserving lifecycle, role, attribution, linkage, zero-to-200-block, version, body-only response, complete revision snapshot, archive/re-anchor, pruning, and immutability semantics. Final HTML is a deterministic self-contained sandbox export derived only from finalized block source and shared state.",
+  "graph": {
+    "width": 1050,
+    "height": 560
+  },
+  "versions": {
+    "dataset": "buildparty-dataset-3",
+    "website": "buildparty-static-webmcp-3",
+    "actor": "deterministic-keyword-1",
+    "verifier": "buildparty-contract-verifier-3"
+  },
+  "tools": [
+    {
+      "id": "init",
+      "title": "Initialize agent",
+      "description": "Call this first when the user asks to use or start BuildParty. On landing, store a reusable agent display identity (use Owner if none is useful); on a party page, create or reuse that party's participant session. Then follow nextAction.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "displayName"
+        ],
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      }
+    },
+    {
+      "id": "create_party",
+      "title": "Create party",
+      "description": "After init on the landing page, create exactly one review room (use title BuildParty session when no supplied content suggests one). Returns the only portable capability results: private owner URL and reviewer URL; continue in the opened party instead of creating another room.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      }
+    },
+    {
+      "id": "get_party",
+      "title": "Get party",
+      "description": "Read first after init in an existing party, and before any versioned change. Returns current artifact, shared state, lifecycle, revisions, open-feedback count, available operations, and a deterministic next action.",
+      "mutates": false,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      }
+    },
+    {
+      "id": "set_artifact",
+      "title": "Set artifact",
+      "description": "Publish prepared conversation content as the first artifact, or replace the whole artifact when get_party advertises this operation. Use stable blocks for independently reviewable sections. Required literals: artifact.format must be \"buildparty.artifact/v1\" and every block.kind must be \"sandbox\". source.html is required; CSS/JS are optional and must be self-contained/no-network. Simple text example: {\"artifact\":{\"format\":\"buildparty.artifact/v1\",\"title\":\"Note\",\"blocks\":[{\"id\":\"note\",\"kind\":\"sandbox\",\"source\":{\"html\":\"<p>Hello</p>\"}}]}}",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact"
+        ],
+        "properties": {
+          "artifact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "format",
+              "title",
+              "blocks"
+            ],
+            "properties": {
+              "format": {
+                "const": "buildparty.artifact/v1"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "blocks": {
+                "type": "array",
+                "minItems": 0,
+                "maxItems": 200,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "kind",
+                    "source"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "const": "sandbox"
+                    },
+                    "source": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "html"
+                      ],
+                      "properties": {
+                        "html": {
+                          "type": "string",
+                          "maxLength": 100000
+                        },
+                        "css": {
+                          "type": "string",
+                          "maxLength": 100000
+                        },
+                        "js": {
+                          "type": "string",
+                          "maxLength": 100000
+                        }
+                      }
+                    },
+                    "initialState": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "statePatch": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "resetState": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    {
+      "id": "update_blocks",
+      "title": "Update blocks",
+      "description": "After get_party, make targeted source edits to existing stable blocks or patch shared state at the exact current version. Link relevant feedbackIds to source edits; a statePatch-only update does not create a revision.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "updates"
+            ]
+          },
+          {
+            "required": [
+              "statePatch"
+            ]
+          },
+          {
+            "properties": {
+              "resetState": {
+                "const": true
+              }
+            },
+            "required": [
+              "resetState"
+            ]
+          }
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "statePatch": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "resetState": {
+            "type": "boolean"
+          },
+          "feedbackIds": {
+            "type": "array",
+            "maxItems": 200,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "updates": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 200,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id"
+              ],
+              "anyOf": [
+                {
+                  "required": [
+                    "title"
+                  ]
+                },
+                {
+                  "required": [
+                    "source"
+                  ]
+                }
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "source": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "minProperties": 1,
+                  "properties": {
+                    "html": {
+                      "type": "string",
+                      "maxLength": 100000
+                    },
+                    "css": {
+                      "type": "string",
+                      "maxLength": 100000
+                    },
+                    "js": {
+                      "type": "string",
+                      "maxLength": 100000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "delete_blocks",
+      "title": "Delete blocks",
+      "description": "Remove obsolete review sections and their shared state at the exact current version when advertised. Deleting every block deliberately leaves a valid zero-block artifact; it does not delete the artifact, room, or revision history.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "blockIds",
+          "expectedVersion"
+        ],
+        "properties": {
+          "blockIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 200,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+            }
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    {
+      "id": "restore_revision",
+      "title": "Restore revision",
+      "description": "Undo unwanted changes by restoring an available pre-final revision as the whole current artifact and shared state, creating a new revision. changedBlockIds may be empty when only title, format, or shared state changed.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "revisionId",
+          "expectedVersion"
+        ],
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    {
+      "id": "get_feedback",
+      "title": "Get feedback",
+      "description": "Read human review comments and prior agent responses before revising. Use open status to find actionable active or archived feedback, then target source changes and link feedback IDs.",
+      "mutates": false,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved",
+              "all"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "respond_to_feedback",
+      "title": "Respond to feedback",
+      "description": "Acknowledge a comment or, after a targeted update_blocks call, link its returned revision and resolve the addressed feedback. Never claim resolution without that revision link.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "feedbackId"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "body"
+            ]
+          },
+          {
+            "required": [
+              "revisionId"
+            ]
+          },
+          {
+            "properties": {
+              "resolve": {
+                "const": true
+              }
+            },
+            "required": [
+              "resolve"
+            ]
+          }
+        ],
+        "properties": {
+          "feedbackId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resolve": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    {
+      "id": "finalize_party",
+      "title": "Finalize party",
+      "description": "Owner-only: when review is complete, lock the exact current version as immutable final output. Open active feedback requires an explicit allowOpenFeedback override; do not use it casually.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "expectedVersion"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "allowOpenFeedback": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    {
+      "id": "get_final_artifact",
+      "title": "Get final artifact",
+      "description": "After finalization, retrieve immutable final metadata and portable interactive HTML for delivery or download; this is read-only and cannot reopen editing.",
+      "mutates": false,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      }
+    },
+    {
+      "id": "human_fixture_add_feedback",
+      "title": "Human fixture: add feedback",
+      "description": "Evaluation-only deterministic human action corresponding to production add_feedback; supporting infrastructure, never native WebMCP.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "blockId",
+          "kind",
+          "body"
+        ],
+        "properties": {
+          "blockId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "comment",
+              "question",
+              "change",
+              "approval",
+              "disagreement"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        }
+      }
+    },
+    {
+      "id": "eval_full_journey",
+      "title": "Evaluation full journey",
+      "description": "Evaluation-only composite supporting infrastructure for the v1 single-action harness; never native WebMCP. Public delete/restore behavior is exercised by dedicated one-action tasks.",
+      "mutates": true,
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "partyTitle",
+          "artifact",
+          "finalName"
+        ],
+        "properties": {
+          "partyTitle": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "artifact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "format",
+              "title",
+              "blocks"
+            ],
+            "properties": {
+              "format": {
+                "const": "buildparty.artifact/v1"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "blocks": {
+                "type": "array",
+                "minItems": 0,
+                "maxItems": 200,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "kind",
+                    "source"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "const": "sandbox"
+                    },
+                    "source": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "html"
+                      ],
+                      "properties": {
+                        "html": {
+                          "type": "string",
+                          "maxLength": 100000
+                        },
+                        "css": {
+                          "type": "string",
+                          "maxLength": 100000
+                        },
+                        "js": {
+                          "type": "string",
+                          "maxLength": 100000
+                        }
+                      }
+                    },
+                    "initialState": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "finalName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      }
+    }
+  ],
+  "states": [
+    {
+      "id": "no_party",
+      "name": "No party",
+      "kind": "entry",
+      "x": 60,
+      "y": 280,
+      "description": "No durable party exists; the deterministic agent identity is ready.",
+      "invariants": [
+        "No party, artifact, feedback, revision, or final exists."
+      ],
+      "tools": [
+        "init",
+        "create_party",
+        "eval_full_journey"
+      ],
+      "fixture": {
+        "id": "fixture-no_party",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": null,
+          "journey_expected_details": {
+            "id": "details",
+            "title": "Details",
+            "kind": "sandbox",
+            "source": {
+              "html": "<p>Stable details</p>",
+              "css": "p{max-width:40rem}",
+              "js": ""
+            },
+            "initialState": {
+              "expanded": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "initialized",
+      "name": "Initialized",
+      "kind": "normal",
+      "x": 260,
+      "y": 280,
+      "description": "Party exists without an artifact.",
+      "invariants": [
+        "Owner/share roles are distinct.",
+        "Version and artifact are null."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "set_artifact",
+        "get_feedback"
+      ],
+      "fixture": {
+        "id": "fixture-initialized",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "initialized",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            }
+          ],
+          "artifact": null,
+          "runtime_state": null,
+          "version": null,
+          "feedback": [],
+          "revisions": [],
+          "final": null,
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {}
+        }
+      }
+    },
+    {
+      "id": "in_review",
+      "name": "In review",
+      "kind": "normal",
+      "x": 480,
+      "y": 140,
+      "description": "Artifact v1 is published for review.",
+      "invariants": [
+        "Artifact and per-block shared state exist.",
+        "Final is null."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "set_artifact",
+        "update_blocks",
+        "delete_blocks",
+        "restore_revision",
+        "get_feedback",
+        "respond_to_feedback",
+        "finalize_party",
+        "human_fixture_add_feedback"
+      ],
+      "fixture": {
+        "id": "fixture-in_review",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "in_review",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Riley Reviewer",
+              "kind": "human"
+            }
+          ],
+          "artifact": {
+            "format": "buildparty.artifact/v1",
+            "title": "Launch review",
+            "blocks": [
+              {
+                "id": "hero",
+                "title": "Hero",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<button>Review</button>",
+                  "css": "button{padding:1rem}",
+                  "js": "window.buildParty.setState('clicks',1)"
+                },
+                "initialState": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                }
+              },
+              {
+                "id": "details",
+                "title": "Details",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<p>Stable details</p>",
+                  "css": "p{max-width:40rem}",
+                  "js": ""
+                },
+                "initialState": {
+                  "expanded": false
+                }
+              }
+            ]
+          },
+          "runtime_state": {
+            "hero": {
+              "clicks": 0,
+              "theme": "indigo"
+            },
+            "details": {
+              "expanded": false
+            }
+          },
+          "version": 1,
+          "feedback": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "block_id": "hero",
+              "kind": "change",
+              "body": "Make the call to action specific.",
+              "status": "open",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000002",
+              "responses": []
+            }
+          ],
+          "revisions": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "version": 1,
+              "source": "set_artifact",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Initial publish",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:01Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 510
+            }
+          ],
+          "final": null,
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {
+            "00000000-0000-4000-8000-000000000006": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "revising",
+      "name": "Revising",
+      "kind": "normal",
+      "x": 480,
+      "y": 420,
+      "description": "A revision explicitly links open human feedback.",
+      "invariants": [
+        "Only targeted block content changed.",
+        "Linked feedback remains open until an agent response resolves it."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "set_artifact",
+        "update_blocks",
+        "delete_blocks",
+        "restore_revision",
+        "get_feedback",
+        "respond_to_feedback",
+        "finalize_party"
+      ],
+      "fixture": {
+        "id": "fixture-revising",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "revising",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Riley Reviewer",
+              "kind": "human"
+            }
+          ],
+          "artifact": {
+            "format": "buildparty.artifact/v1",
+            "title": "Launch review",
+            "blocks": [
+              {
+                "id": "hero",
+                "title": "Hero",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<button>Start the review</button>",
+                  "css": "button{padding:1rem}",
+                  "js": "window.buildParty.setState('clicks',1)"
+                },
+                "initialState": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                }
+              },
+              {
+                "id": "details",
+                "title": "Details",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<p>Stable details</p>",
+                  "css": "p{max-width:40rem}",
+                  "js": ""
+                },
+                "initialState": {
+                  "expanded": false
+                }
+              }
+            ]
+          },
+          "runtime_state": {
+            "hero": {
+              "clicks": 3,
+              "theme": "indigo"
+            },
+            "details": {
+              "expanded": false
+            }
+          },
+          "version": 2,
+          "feedback": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "block_id": "hero",
+              "kind": "change",
+              "body": "Make the call to action specific.",
+              "status": "open",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000002",
+              "responses": []
+            }
+          ],
+          "revisions": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "version": 1,
+              "source": "set_artifact",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Initial publish",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:01Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 510
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000007",
+              "version": 2,
+              "source": "update_blocks",
+              "changed_block_ids": [
+                "hero"
+              ],
+              "feedback_ids": [
+                "00000000-0000-4000-8000-000000000004"
+              ],
+              "summary": "Address reviewer CTA feedback",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:02Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 520
+            }
+          ],
+          "final": null,
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {
+            "00000000-0000-4000-8000-000000000006": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            },
+            "00000000-0000-4000-8000-000000000007": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Start the review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 3,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "finalized",
+      "name": "Finalized",
+      "kind": "terminal",
+      "x": 980,
+      "y": 280,
+      "description": "The exact source and shared state are immutable; historical heavy revision snapshots are pruned.",
+      "invariants": [
+        "Only read operations remain; delete and restore are unavailable.",
+        "Final blocks/state exactly snapshot source version 2.",
+        "Revision metadata and feedback remain while heavy historical snapshots are pruned."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "get_feedback",
+        "get_final_artifact"
+      ],
+      "fixture": {
+        "id": "fixture-finalized",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "finalized",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Riley Reviewer",
+              "kind": "human"
+            }
+          ],
+          "artifact": {
+            "format": "buildparty.artifact/v1",
+            "title": "Launch review",
+            "blocks": [
+              {
+                "id": "hero",
+                "title": "Hero",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<button>Start the review</button>",
+                  "css": "button{padding:1rem}",
+                  "js": "window.buildParty.setState('clicks',1)"
+                },
+                "initialState": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                }
+              },
+              {
+                "id": "details",
+                "title": "Details",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<p>Stable details</p>",
+                  "css": "p{max-width:40rem}",
+                  "js": ""
+                },
+                "initialState": {
+                  "expanded": false
+                }
+              }
+            ]
+          },
+          "runtime_state": {
+            "hero": {
+              "clicks": 3,
+              "theme": "indigo"
+            },
+            "details": {
+              "expanded": false
+            }
+          },
+          "version": 2,
+          "feedback": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "block_id": "hero",
+              "kind": "change",
+              "body": "Make the call to action specific.",
+              "status": "resolved",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000002",
+              "responses": [
+                {
+                  "id": "00000000-0000-4000-8000-000000000005",
+                  "body": "Updated only the CTA.",
+                  "revision_id": "00000000-0000-4000-8000-000000000007",
+                  "resolved": true,
+                  "actor_identity_id": "00000000-0000-4000-8000-000000000001"
+                }
+              ],
+              "resolved_by_identity_id": "00000000-0000-4000-8000-000000000001"
+            }
+          ],
+          "revisions": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "version": 1,
+              "source": "set_artifact",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Initial publish",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:01Z",
+              "snapshot_available": false,
+              "snapshot_pruned": true,
+              "snapshot_bytes": 510
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000007",
+              "version": 2,
+              "source": "update_blocks",
+              "changed_block_ids": [
+                "hero"
+              ],
+              "feedback_ids": [
+                "00000000-0000-4000-8000-000000000004"
+              ],
+              "summary": "Address reviewer CTA feedback",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:02Z",
+              "snapshot_available": false,
+              "snapshot_pruned": true,
+              "snapshot_bytes": 520
+            }
+          ],
+          "final": {
+            "id": "00000000-0000-4000-8000-000000000008",
+            "name": "Approved launch review",
+            "source_version": 2,
+            "blocks": [
+              {
+                "id": "hero",
+                "title": "Hero",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<button>Start the review</button>",
+                  "css": "button{padding:1rem}",
+                  "js": "window.buildParty.setState('clicks',1)"
+                },
+                "initialState": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                }
+              },
+              {
+                "id": "details",
+                "title": "Details",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<p>Stable details</p>",
+                  "css": "p{max-width:40rem}",
+                  "js": ""
+                },
+                "initialState": {
+                  "expanded": false
+                }
+              }
+            ],
+            "runtime_state": {
+              "hero": {
+                "clicks": 3,
+                "theme": "indigo"
+              },
+              "details": {
+                "expanded": false
+              }
+            },
+            "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+            "open_feedback_overridden": false,
+            "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src 'self'; connect-src 'none'; object-src 'none'\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"referrer\" content=\"no-referrer\"><title>Launch review</title><style>*{box-sizing:border-box}body{max-width:960px;margin:3rem auto;padding:0 1rem;font:16px/1.5 system-ui}iframe{display:block;width:100%;min-height:320px;border:1px solid #ccc}</style></head><body><main><h1>Launch review</h1><section><h2>Hero</h2><div data-block=\"hero\"></div></section><section><h2>Details</h2><div data-block=\"details\"></div></section></main><script>(()=>{\nconst data={\"frames\":[{\"channel\":\"buildparty-final-hero\",\"document\":\"\\u003c!doctype html>\\u003chtml>\\u003chead>\\u003cmeta charset=\\\"utf-8\\\">\\u003cmeta http-equiv=\\\"Content-Security-Policy\\\" content=\\\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; object-src 'none'; frame-src 'none'\\\">\\u003c/head>\\u003cbody>\\u003cdiv id=\\\"buildparty-root\\\">\\u003c/div>\\u003cscript>(()=>{\\nconst source={\\\"css\\\":\\\"button{padding:1rem}\\\",\\\"html\\\":\\\"\\\\u003cbutton>Start the review\\\\u003c/button>\\\",\\\"js\\\":\\\"window.buildParty.setState('clicks',1)\\\"},identity={\\\"blockId\\\":\\\"hero\\\",\\\"channel\\\":\\\"buildparty-final-hero\\\"};let state={},listeners=new Set();\\nconst send=message=>parent.postMessage({...identity,...message},'*');\\nconst publish=next=>{state=structuredClone(next);for(const listener of listeners)listener(structuredClone(state));};\\nwindow.buildParty={getState:()=>structuredClone(state),setState:(path,value)=>send({type:'bp:set',path,value}),patchState:patch=>send({type:'bp:patch',patch}),subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);}};\\naddEventListener('message',event=>{const message=event.data;if(event.source===parent&&message?.type==='bp:state'&&message.channel===identity.channel)publish(message.state);});\\nconst style=document.createElement('style');style.textContent=source.css||'';document.head.append(style);document.getElementById('buildparty-root').innerHTML=source.html;send({type:'bp:ready'});\\n})()\\u003c/script>\\u003cscript>window.buildParty.setState('clicks',1)\\u003c/script>\\u003c/body>\\u003c/html>\",\"id\":\"hero\",\"title\":\"Hero\"},{\"channel\":\"buildparty-final-details\",\"document\":\"\\u003c!doctype html>\\u003chtml>\\u003chead>\\u003cmeta charset=\\\"utf-8\\\">\\u003cmeta http-equiv=\\\"Content-Security-Policy\\\" content=\\\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; object-src 'none'; frame-src 'none'\\\">\\u003c/head>\\u003cbody>\\u003cdiv id=\\\"buildparty-root\\\">\\u003c/div>\\u003cscript>(()=>{\\nconst source={\\\"css\\\":\\\"p{max-width:40rem}\\\",\\\"html\\\":\\\"\\\\u003cp>Stable details\\\\u003c/p>\\\",\\\"js\\\":\\\"\\\"},identity={\\\"blockId\\\":\\\"details\\\",\\\"channel\\\":\\\"buildparty-final-details\\\"};let state={},listeners=new Set();\\nconst send=message=>parent.postMessage({...identity,...message},'*');\\nconst publish=next=>{state=structuredClone(next);for(const listener of listeners)listener(structuredClone(state));};\\nwindow.buildParty={getState:()=>structuredClone(state),setState:(path,value)=>send({type:'bp:set',path,value}),patchState:patch=>send({type:'bp:patch',patch}),subscribe:listener=>{listeners.add(listener);return()=>listeners.delete(listener);}};\\naddEventListener('message',event=>{const message=event.data;if(event.source===parent&&message?.type==='bp:state'&&message.channel===identity.channel)publish(message.state);});\\nconst style=document.createElement('style');style.textContent=source.css||'';document.head.append(style);document.getElementById('buildparty-root').innerHTML=source.html;send({type:'bp:ready'});\\n})()\\u003c/script>\\u003cscript>\\u003c/script>\\u003c/body>\\u003c/html>\",\"id\":\"details\",\"title\":\"Details\"}],\"runtimeState\":{\"details\":{\"expanded\":false},\"hero\":{\"clicks\":3,\"theme\":\"indigo\"}}},byWindow=new Map(),state=structuredClone(data.runtimeState);\nconst send=entry=>entry.frame.contentWindow?.postMessage({type:'bp:state',channel:entry.channel,state:structuredClone(state[entry.id]||{})},'*');\nfor(const entry of data.frames){const host=document.querySelector('[data-block=\"'+CSS.escape(entry.id)+'\"]'),frame=document.createElement('iframe');frame.setAttribute('sandbox','allow-scripts');frame.setAttribute('referrerpolicy','no-referrer');frame.title=entry.title;frame.srcdoc=entry.document;host.append(frame);entry.frame=frame;frame.addEventListener('load',()=>{byWindow.set(frame.contentWindow,entry);send(entry);});}\naddEventListener('message',event=>{const entry=byWindow.get(event.source),message=event.data;if(!entry||message?.channel!==entry.channel)return;if(message.type==='bp:ready'){send(entry);return;}const next=structuredClone(state[entry.id]||{});if(message.type==='bp:patch'&&message.patch&&typeof message.patch==='object'&&!Array.isArray(message.patch))Object.assign(next,message.patch);else if(message.type==='bp:set'&&typeof message.path==='string')next[message.path]=structuredClone(message.value);else return;state[entry.id]=next;send(entry);});\n})()</script></body></html>"
+          },
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {}
+        }
+      }
+    },
+    {
+      "id": "deleted",
+      "name": "Feedback block deleted",
+      "kind": "normal",
+      "x": 710,
+      "y": 90,
+      "description": "The hero and its runtime state are removed in v2 while its open feedback remains archived and nonblocking.",
+      "invariants": [
+        "Only the explicit hero block and its state are removed.",
+        "Open hero feedback is archived and does not block finalization.",
+        "The v2 delete revision stores the complete remaining artifact and state."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "set_artifact",
+        "update_blocks",
+        "delete_blocks",
+        "restore_revision",
+        "get_feedback",
+        "respond_to_feedback",
+        "finalize_party"
+      ],
+      "fixture": {
+        "id": "fixture-deleted",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "in_review",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Riley Reviewer",
+              "kind": "human"
+            }
+          ],
+          "artifact": {
+            "format": "buildparty.artifact/v1",
+            "title": "Launch review",
+            "blocks": [
+              {
+                "id": "details",
+                "title": "Details",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<p>Stable details</p>",
+                  "css": "p{max-width:40rem}",
+                  "js": ""
+                },
+                "initialState": {
+                  "expanded": false
+                }
+              }
+            ]
+          },
+          "runtime_state": {
+            "details": {
+              "expanded": false
+            }
+          },
+          "version": 2,
+          "feedback": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "block_id": "hero",
+              "kind": "change",
+              "body": "Make the call to action specific.",
+              "status": "open",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000002",
+              "responses": []
+            }
+          ],
+          "revisions": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "version": 1,
+              "source": "set_artifact",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Initial publish",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:01Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 510
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000007",
+              "version": 2,
+              "source": "delete_blocks",
+              "changed_block_ids": [
+                "hero"
+              ],
+              "feedback_ids": [],
+              "summary": "Archive hero feedback",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:02Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 263
+            }
+          ],
+          "final": null,
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {
+            "00000000-0000-4000-8000-000000000006": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            },
+            "00000000-0000-4000-8000-000000000007": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "details": {
+                  "expanded": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "zero_blocks",
+      "name": "Zero-block artifact",
+      "kind": "normal",
+      "x": 710,
+      "y": 280,
+      "description": "The artifact remains valid at v3 with no blocks or runtime state and restorable snapshots.",
+      "invariants": [
+        "The artifact exists with zero blocks; there is no delete-artifact operation.",
+        "delete_blocks is unavailable because no current block exists.",
+        "restore_revision remains available while snapshots exist."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "set_artifact",
+        "update_blocks",
+        "restore_revision",
+        "get_feedback",
+        "respond_to_feedback",
+        "finalize_party"
+      ],
+      "fixture": {
+        "id": "fixture-zero_blocks",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "in_review",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Riley Reviewer",
+              "kind": "human"
+            }
+          ],
+          "artifact": {
+            "format": "buildparty.artifact/v1",
+            "title": "Launch review",
+            "blocks": []
+          },
+          "runtime_state": {},
+          "version": 3,
+          "feedback": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "block_id": "hero",
+              "kind": "change",
+              "body": "Make the call to action specific.",
+              "status": "open",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000002",
+              "responses": []
+            }
+          ],
+          "revisions": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "version": 1,
+              "source": "set_artifact",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Initial publish",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:01Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 510
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000007",
+              "version": 2,
+              "source": "delete_blocks",
+              "changed_block_ids": [
+                "hero"
+              ],
+              "feedback_ids": [],
+              "summary": "Archive hero feedback",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:02Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 263
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000010",
+              "version": 3,
+              "source": "delete_blocks",
+              "changed_block_ids": [
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Deliberate empty canvas",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:03Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 73
+            }
+          ],
+          "final": null,
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {
+            "00000000-0000-4000-8000-000000000006": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            },
+            "00000000-0000-4000-8000-000000000007": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "details": {
+                  "expanded": false
+                }
+              }
+            },
+            "00000000-0000-4000-8000-000000000010": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": []
+              },
+              "runtime_state": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "restored",
+      "name": "Snapshot restored",
+      "kind": "normal",
+      "x": 710,
+      "y": 470,
+      "description": "The complete v1 artifact and runtime state are restored as the new v4 head.",
+      "invariants": [
+        "Artifact and runtime state exactly equal the selected v1 snapshot.",
+        "Restore creates a new monotonic revision rather than rewinding history.",
+        "Hero feedback re-anchors as active by stable block ID."
+      ],
+      "tools": [
+        "init",
+        "get_party",
+        "set_artifact",
+        "update_blocks",
+        "delete_blocks",
+        "restore_revision",
+        "get_feedback",
+        "respond_to_feedback",
+        "finalize_party"
+      ],
+      "fixture": {
+        "id": "fixture-restored",
+        "version": "1",
+        "data": {
+          "schema": "buildparty.bench/v1",
+          "actor": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Planning Agent",
+            "kind": "agent"
+          },
+          "agent_session": {
+            "initialized": true,
+            "participant_id": "00000000-0000-4000-8000-000000000001"
+          },
+          "party": {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "title": "Launch review",
+            "lifecycle": "in_review",
+            "access": "owner"
+          },
+          "participants": [
+            {
+              "id": "00000000-0000-4000-8000-000000000001",
+              "name": "Planning Agent",
+              "kind": "agent"
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "name": "Riley Reviewer",
+              "kind": "human"
+            }
+          ],
+          "artifact": {
+            "format": "buildparty.artifact/v1",
+            "title": "Launch review",
+            "blocks": [
+              {
+                "id": "hero",
+                "title": "Hero",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<button>Review</button>",
+                  "css": "button{padding:1rem}",
+                  "js": "window.buildParty.setState('clicks',1)"
+                },
+                "initialState": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                }
+              },
+              {
+                "id": "details",
+                "title": "Details",
+                "kind": "sandbox",
+                "source": {
+                  "html": "<p>Stable details</p>",
+                  "css": "p{max-width:40rem}",
+                  "js": ""
+                },
+                "initialState": {
+                  "expanded": false
+                }
+              }
+            ]
+          },
+          "runtime_state": {
+            "hero": {
+              "clicks": 0,
+              "theme": "indigo"
+            },
+            "details": {
+              "expanded": false
+            }
+          },
+          "version": 4,
+          "feedback": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "block_id": "hero",
+              "kind": "change",
+              "body": "Make the call to action specific.",
+              "status": "open",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000002",
+              "responses": []
+            }
+          ],
+          "revisions": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "version": 1,
+              "source": "set_artifact",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Initial publish",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:01Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 510
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000007",
+              "version": 2,
+              "source": "delete_blocks",
+              "changed_block_ids": [
+                "hero"
+              ],
+              "feedback_ids": [],
+              "summary": "Archive hero feedback",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:02Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 263
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000010",
+              "version": 3,
+              "source": "delete_blocks",
+              "changed_block_ids": [
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Deliberate empty canvas",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:03Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 73
+            },
+            {
+              "id": "00000000-0000-4000-8000-000000000011",
+              "version": 4,
+              "source": "restore_revision",
+              "changed_block_ids": [
+                "hero",
+                "details"
+              ],
+              "feedback_ids": [],
+              "summary": "Restore complete v1 snapshot",
+              "actor_identity_id": "00000000-0000-4000-8000-000000000001",
+              "created_at": "2026-09-01T00:00:04Z",
+              "snapshot_available": true,
+              "snapshot_pruned": false,
+              "snapshot_bytes": 510
+            }
+          ],
+          "final": null,
+          "capabilities": {
+            "owner_role": "owner",
+            "share_role": "share"
+          },
+          "_revision_snapshots": {
+            "00000000-0000-4000-8000-000000000006": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            },
+            "00000000-0000-4000-8000-000000000007": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "details": {
+                  "expanded": false
+                }
+              }
+            },
+            "00000000-0000-4000-8000-000000000010": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": []
+              },
+              "runtime_state": {}
+            },
+            "00000000-0000-4000-8000-000000000011": {
+              "artifact": {
+                "format": "buildparty.artifact/v1",
+                "title": "Launch review",
+                "blocks": [
+                  {
+                    "id": "hero",
+                    "title": "Hero",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<button>Review</button>",
+                      "css": "button{padding:1rem}",
+                      "js": "window.buildParty.setState('clicks',1)"
+                    },
+                    "initialState": {
+                      "clicks": 0,
+                      "theme": "indigo"
+                    }
+                  },
+                  {
+                    "id": "details",
+                    "title": "Details",
+                    "kind": "sandbox",
+                    "source": {
+                      "html": "<p>Stable details</p>",
+                      "css": "p{max-width:40rem}",
+                      "js": ""
+                    },
+                    "initialState": {
+                      "expanded": false
+                    }
+                  }
+                ]
+              },
+              "runtime_state": {
+                "hero": {
+                  "clicks": 0,
+                  "theme": "indigo"
+                },
+                "details": {
+                  "expanded": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "initialize-agent",
+      "source": "no_party",
+      "target": "no_party",
+      "tool": "init",
+      "intent": "Initialize the deterministic agent identity",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to no_party.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "create-workspace",
+      "source": "no_party",
+      "target": "initialized",
+      "tool": "create_party",
+      "intent": "Create an owner workspace",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to initialized.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "read-party",
+      "source": "initialized",
+      "target": "initialized",
+      "tool": "get_party",
+      "intent": "Read party without mutation",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to initialized.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "publish-artifact",
+      "source": "initialized",
+      "target": "in_review",
+      "tool": "set_artifact",
+      "intent": "Publish exact artifact v1",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to in_review.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "read-feedback",
+      "source": "in_review",
+      "target": "in_review",
+      "tool": "get_feedback",
+      "intent": "Read open human feedback without mutation",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to in_review.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "human-review-fixture",
+      "source": "in_review",
+      "target": "in_review",
+      "tool": "human_fixture_add_feedback",
+      "intent": "Add deterministic human block feedback outside WebMCP",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to in_review.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "revise-targeted-block",
+      "source": "in_review",
+      "target": "revising",
+      "tool": "update_blocks",
+      "intent": "Revise one block and link feedback",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to revising.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "respond-with-body",
+      "source": "revising",
+      "target": "revising",
+      "tool": "respond_to_feedback",
+      "intent": "Respond with body text without resolving or linking a revision",
+      "curve": -55,
+      "expected_effects": [
+        "A body-only agent response is appended with a null revision and feedback remains open."
+      ],
+      "forbidden_effects": [
+        "Do not resolve feedback or mutate lifecycle, artifact, shared state, revisions, or version."
+      ],
+      "postconditions": [
+        "State remains revising.",
+        "Response attribution is the agent and revision_id is null."
+      ]
+    },
+    {
+      "id": "resolve-feedback",
+      "source": "revising",
+      "target": "in_review",
+      "tool": "respond_to_feedback",
+      "intent": "Resolve feedback through its linked revision",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to in_review.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "finalize-with-override",
+      "source": "in_review",
+      "target": "finalized",
+      "tool": "finalize_party",
+      "intent": "Owner explicitly overrides open feedback and finalizes",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to finalized.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "patch-runtime-state-only",
+      "source": "in_review",
+      "target": "in_review",
+      "tool": "update_blocks",
+      "intent": "Patch shared state without creating a source revision",
+      "curve": 0,
+      "expected_effects": [
+        "Runtime state merges while artifact, version, and revision history remain exact."
+      ],
+      "forbidden_effects": [
+        "No source, lifecycle, feedback, version, or revision mutation."
+      ],
+      "postconditions": [
+        "State remains in_review and revision count is unchanged."
+      ]
+    },
+    {
+      "id": "delete-feedback-block",
+      "source": "in_review",
+      "target": "deleted",
+      "tool": "delete_blocks",
+      "intent": "Delete hero and archive its feedback",
+      "curve": 0,
+      "expected_effects": [
+        "Hero and hero state are removed in a complete v2 snapshot revision.",
+        "Hero feedback remains open but becomes archived and nonblocking."
+      ],
+      "forbidden_effects": [
+        "Details, feedback history, prior snapshots, and artifact identity must not change."
+      ],
+      "postconditions": [
+        "State resolves to deleted at exactly the next version."
+      ]
+    },
+    {
+      "id": "delete-last-block",
+      "source": "deleted",
+      "target": "zero_blocks",
+      "tool": "delete_blocks",
+      "intent": "Delete the final current block without deleting the artifact",
+      "curve": 0,
+      "expected_effects": [
+        "Details and details state are removed in a complete v3 snapshot revision.",
+        "The artifact remains present with zero blocks."
+      ],
+      "forbidden_effects": [
+        "Feedback and revision history must remain.",
+        "No delete-artifact operation may appear."
+      ],
+      "postconditions": [
+        "State resolves to zero_blocks and restore remains available."
+      ]
+    },
+    {
+      "id": "restore-whole-snapshot",
+      "source": "zero_blocks",
+      "target": "restored",
+      "tool": "restore_revision",
+      "intent": "Restore the complete v1 artifact and runtime snapshot as a new head",
+      "curve": 0,
+      "expected_effects": [
+        "Whole artifact and runtime state exactly equal the selected available snapshot.",
+        "A distinct v4 restore revision snapshots the restored head.",
+        "Hero feedback re-anchors as active by stable block ID."
+      ],
+      "forbidden_effects": [
+        "Prior revisions and feedback must not be deleted or rewritten."
+      ],
+      "postconditions": [
+        "State resolves to restored at a monotonically newer version."
+      ]
+    },
+    {
+      "id": "finalize-archived-zero",
+      "source": "zero_blocks",
+      "target": "finalized",
+      "tool": "finalize_party",
+      "intent": "Finalize an exact zero-block snapshot with only archived open feedback",
+      "curve": 0,
+      "expected_effects": [
+        "Archived open feedback is nonblocking; no override is recorded.",
+        "Final source/state are exact and portable HTML is real.",
+        "All heavy revision snapshots are pruned while metadata remains."
+      ],
+      "forbidden_effects": [
+        "No live source/state, revision metadata, or feedback may be lost."
+      ],
+      "postconditions": [
+        "State resolves to finalized with reads only."
+      ]
+    },
+    {
+      "id": "read-final",
+      "source": "finalized",
+      "target": "finalized",
+      "tool": "get_final_artifact",
+      "intent": "Read immutable final snapshot",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to finalized.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    },
+    {
+      "id": "complete-journey",
+      "source": "no_party",
+      "target": "finalized",
+      "tool": "eval_full_journey",
+      "intent": "Exercise the full production journey within the v1 one-action harness",
+      "curve": 0,
+      "expected_effects": [
+        "Target lifecycle/state and operation-specific authoritative effects are verified."
+      ],
+      "forbidden_effects": [
+        "Unrelated blocks, shared state, identities, and immutable final snapshots must not change."
+      ],
+      "postconditions": [
+        "State resolves to finalized.",
+        "Adapter verifier checks attribution, linkage, roles, and preservation."
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-initialize-agent",
+      "version": "1",
+      "status": "active",
+      "transition_id": "initialize-agent",
+      "prompt": "Initialize my agent as Planning Agent.",
+      "inputs": {
+        "displayName": "Planning Agent"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-create-workspace",
+      "version": "1",
+      "status": "active",
+      "transition_id": "create-workspace",
+      "prompt": "Create a party titled Launch review.",
+      "inputs": {
+        "title": "Launch review"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-read-party",
+      "version": "1",
+      "status": "active",
+      "transition_id": "read-party",
+      "prompt": "Read the current party without changing anything.",
+      "inputs": {},
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-publish-artifact",
+      "version": "1",
+      "status": "active",
+      "transition_id": "publish-artifact",
+      "prompt": "Publish the sandbox artifact for review and preserve its initial shared state.",
+      "inputs": {
+        "artifact": {
+          "format": "buildparty.artifact/v1",
+          "title": "Launch review",
+          "blocks": [
+            {
+              "id": "hero",
+              "title": "Hero",
+              "kind": "sandbox",
+              "source": {
+                "html": "<button>Review</button>",
+                "css": "button{padding:1rem}",
+                "js": "window.buildParty.setState('clicks',1)"
+              },
+              "initialState": {
+                "clicks": 0,
+                "theme": "indigo"
+              }
+            },
+            {
+              "id": "details",
+              "title": "Details",
+              "kind": "sandbox",
+              "source": {
+                "html": "<p>Stable details</p>",
+                "css": "p{max-width:40rem}",
+                "js": ""
+              },
+              "initialState": {
+                "expanded": false
+              }
+            }
+          ]
+        },
+        "summary": "Initial publish"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-read-feedback",
+      "version": "1",
+      "status": "active",
+      "transition_id": "read-feedback",
+      "prompt": "List open feedback without changing the party.",
+      "inputs": {
+        "status": "open"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-human-review-fixture",
+      "version": "1",
+      "status": "active",
+      "transition_id": "human-review-fixture",
+      "prompt": "Use the deterministic human fixture to add block feedback on hero.",
+      "inputs": {
+        "blockId": "hero",
+        "kind": "change",
+        "body": "Make the call to action specific."
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-revise-targeted-block",
+      "version": "1",
+      "status": "active",
+      "transition_id": "revise-targeted-block",
+      "prompt": "Update only the hero call to action, preserve details, link the feedback, and patch its click state.",
+      "inputs": {
+        "expectedVersion": 1,
+        "updates": [
+          {
+            "id": "hero",
+            "source": {
+              "html": "<button>Start the review</button>"
+            }
+          }
+        ],
+        "statePatch": {
+          "hero": {
+            "clicks": 3
+          }
+        },
+        "feedbackIds": [
+          "00000000-0000-4000-8000-000000000004"
+        ],
+        "summary": "Address reviewer CTA feedback"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-respond-with-body",
+      "version": "1",
+      "status": "active",
+      "transition_id": "respond-with-body",
+      "prompt": "Respond to the feedback without resolving it while I investigate.",
+      "inputs": {
+        "feedbackId": "00000000-0000-4000-8000-000000000004",
+        "body": "I am investigating this request."
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-resolve-feedback",
+      "version": "1",
+      "status": "active",
+      "transition_id": "resolve-feedback",
+      "prompt": "Resolve the linked feedback with the addressing revision and an agent response.",
+      "inputs": {
+        "feedbackId": "00000000-0000-4000-8000-000000000004",
+        "body": "Updated only the CTA.",
+        "revisionId": "00000000-0000-4000-8000-000000000007",
+        "resolve": true
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-finalize-with-override",
+      "version": "1",
+      "status": "active",
+      "transition_id": "finalize-with-override",
+      "prompt": "Finalize with the explicit open-feedback override as the owner.",
+      "inputs": {
+        "name": "Approved with open feedback",
+        "expectedVersion": 1,
+        "allowOpenFeedback": true
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-patch-runtime-state-only",
+      "version": "1",
+      "status": "active",
+      "transition_id": "patch-runtime-state-only",
+      "prompt": "Patch only shared state for hero and do not create a source revision.",
+      "inputs": {
+        "expectedVersion": 1,
+        "statePatch": {
+          "hero": {
+            "clicks": 9
+          }
+        }
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-delete-feedback-block",
+      "version": "1",
+      "status": "active",
+      "transition_id": "delete-feedback-block",
+      "prompt": "Delete the feedback block hero at the exact current version and retain its review history.",
+      "inputs": {
+        "blockIds": [
+          "hero"
+        ],
+        "expectedVersion": 1,
+        "summary": "Archive hero feedback"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-delete-last-block",
+      "version": "1",
+      "status": "active",
+      "transition_id": "delete-last-block",
+      "prompt": "Delete the last block details while keeping the deliberate zero-block artifact and revision history.",
+      "inputs": {
+        "blockIds": [
+          "details"
+        ],
+        "expectedVersion": 2,
+        "summary": "Deliberate empty canvas"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-restore-whole-snapshot",
+      "version": "1",
+      "status": "active",
+      "transition_id": "restore-whole-snapshot",
+      "prompt": "Restore the whole artifact and shared state from revision v1 as a new monotonic head.",
+      "inputs": {
+        "revisionId": "00000000-0000-4000-8000-000000000006",
+        "expectedVersion": 3,
+        "summary": "Restore complete v1 snapshot"
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-finalize-archived-zero",
+      "version": "1",
+      "status": "active",
+      "transition_id": "finalize-archived-zero",
+      "prompt": "Finalize the zero-block artifact without an override because its open feedback is archived.",
+      "inputs": {
+        "name": "Approved empty canvas",
+        "expectedVersion": 3
+      },
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-read-final",
+      "version": "1",
+      "status": "active",
+      "transition_id": "read-final",
+      "prompt": "Read the immutable final artifact without changing it.",
+      "inputs": {},
+      "expected_outcome": "passed"
+    },
+    {
+      "id": "task-complete-journey",
+      "version": "1",
+      "status": "active",
+      "transition_id": "complete-journey",
+      "prompt": "Complete the entire deterministic journey from creation through shared human review, targeted revision, resolution, and finalization.",
+      "inputs": {
+        "partyTitle": "Launch review",
+        "artifact": {
+          "format": "buildparty.artifact/v1",
+          "title": "Launch review",
+          "blocks": [
+            {
+              "id": "hero",
+              "title": "Hero",
+              "kind": "sandbox",
+              "source": {
+                "html": "<button>Review</button>",
+                "css": "button{padding:1rem}",
+                "js": "window.buildParty.setState('clicks',1)"
+              },
+              "initialState": {
+                "clicks": 0,
+                "theme": "indigo"
+              }
+            },
+            {
+              "id": "details",
+              "title": "Details",
+              "kind": "sandbox",
+              "source": {
+                "html": "<p>Stable details</p>",
+                "css": "p{max-width:40rem}",
+                "js": ""
+              },
+              "initialState": {
+                "expanded": false
+              }
+            }
+          ]
+        },
+        "finalName": "Approved launch review"
+      },
+      "expected_outcome": "passed"
+    }
+  ]
+}

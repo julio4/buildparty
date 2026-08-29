@@ -1,0 +1,88 @@
+[
+  {
+    "id": "bare-start",
+    "fixture": "landing",
+    "prompt": "Let's use BuildParty.",
+    "allowedCalls": ["init", "create_party"],
+    "requiredCalls": ["init", "create_party"],
+    "forbiddenCalls": ["set_artifact"],
+    "quality": { "fallbackTitle": "BuildParty session" }
+  },
+  {
+    "id": "planning-context",
+    "fixture": "landing",
+    "prompt": "Let's use BuildParty to turn this supplied planning context into a reviewable plan. Goal: launch an invite-only beta in four weeks. Workstreams: onboarding, reliability, and feedback operations. Open decision: invite 20 or 50 teams. Include milestones, risks, success measures, and the open decision for shared review.",
+    "allowedCalls": ["init", "create_party", "set_artifact"],
+    "requiredCalls": ["init", "create_party", "set_artifact"],
+    "forbiddenCalls": [],
+    "quality": {
+      "minBlocks": 4,
+      "sections": [
+        { "name": "goal", "concepts": [["invite-only beta"], ["four weeks", "4 weeks"]] },
+        { "name": "workstreams", "concepts": [["onboarding"], ["reliability"], ["feedback operations"]] },
+        { "name": "open decision", "concepts": [["20"], ["50"], ["team"]] },
+        { "name": "delivery", "concepts": [["milestone"], ["risk"], ["success measure", "success metric"]] }
+      ]
+    }
+  },
+  {
+    "id": "learning-context",
+    "fixture": "landing",
+    "prompt": "Use BuildParty to publish an interactive learning notebook from this supplied lesson. The call stack runs the current synchronous frames. Timer callbacks enter the task queue after the stack clears. Promise callbacks are microtasks, and the microtask queue drains before the next task. Prediction exercise: for console.log('A'); setTimeout(()=>console.log('B'),0); Promise.resolve().then(()=>console.log('C')); console.log('D'), the output is A, D, C, B. Include a persistent learner answer or completion control and progress state.",
+    "allowedCalls": ["init", "create_party", "set_artifact"],
+    "requiredCalls": ["init", "create_party", "set_artifact"],
+    "forbiddenCalls": [],
+    "quality": {
+      "minBlocks": 4,
+      "sections": [
+        { "name": "call stack", "concepts": [["call stack"], ["synchronous", "current frame"]] },
+        { "name": "queue ordering", "concepts": [["task queue", "timer callback"], ["microtask"], ["before the next task", "before next task"]] },
+        { "name": "prediction exercise", "concepts": [["prediction", "predict"], ["A, D, C, B", "A D C B"]] },
+        { "name": "progress", "concepts": [["progress", "complete"], ["answer", "prediction"]] }
+      ],
+      "interaction": { "persistent": true }
+    }
+  },
+  {
+    "id": "presentation-context",
+    "fixture": "landing",
+    "prompt": "Use BuildParty to publish a concise product-kickoff presentation from this supplied brief. Problem: beta teams request access by email and feedback gets lost across spreadsheets. Proposed workflow: one invite dashboard plus an in-product survey. Evidence: 12 customer interviews found 8 teams duplicating feedback tracking. Risks: low survey response and incorrect invite permissions. Next steps: pilot with 20 teams and review results weekly. Make each section easy to comment on.",
+    "allowedCalls": ["init", "create_party", "set_artifact"],
+    "requiredCalls": ["init", "create_party", "set_artifact"],
+    "forbiddenCalls": [],
+    "quality": {
+      "minBlocks": 5,
+      "sections": [
+        { "name": "problem", "concepts": [["email"], ["spreadsheet"], ["feedback"]] },
+        { "name": "workflow", "concepts": [["invite dashboard"], ["in-product survey", "product survey"]] },
+        { "name": "evidence", "concepts": [["12"], ["8"], ["interview"]] },
+        { "name": "risks", "concepts": [["survey response"], ["permission"]] },
+        { "name": "next steps", "concepts": [["20"], ["weekly", "each week"]] }
+      ]
+    }
+  },
+  {
+    "id": "feedback-revision",
+    "fixture": "feedback",
+    "prompt": "This BuildParty room and agent session are already initialized and open in review. Read it and its anchored feedback, make only the requested CTA change, explicitly link the feedback to the update revision, then respond with that returned revision and resolve the feedback.",
+    "allowedCalls": ["get_party", "get_feedback", "update_blocks", "respond_to_feedback"],
+    "requiredCalls": ["get_party", "get_feedback", "update_blocks", "respond_to_feedback"],
+    "forbiddenCalls": ["set_artifact", "finalize_party"]
+  },
+  {
+    "id": "state-only",
+    "fixture": "state",
+    "prompt": "This existing BuildParty artifact and agent session are already initialized and open. Set the shared facilitator timer to 15 using a state-only change. Read the party first; do not change source and do not claim a new revision.",
+    "allowedCalls": ["get_party", "update_blocks"],
+    "requiredCalls": ["get_party", "update_blocks"],
+    "forbiddenCalls": ["set_artifact"]
+  },
+  {
+    "id": "no-webmcp",
+    "fixture": "none",
+    "prompt": "Let's use BuildParty to review a launch plan, but this session has no WebMCP tools available.",
+    "allowedCalls": [],
+    "requiredCalls": [],
+    "forbiddenCalls": ["init", "create_party", "set_artifact", "update_blocks"]
+  }
+]
