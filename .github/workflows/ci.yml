@@ -27,6 +27,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm run test:production-harness
+      - name: Check release packaging
+        run: |
+          sh -n scripts/build-release.sh scripts/test-build-release.sh
+          scripts/test-build-release.sh
       - name: Smoke production image and static serving
         run: scripts/test-production-image.sh
       - run: npx playwright install --with-deps chromium
