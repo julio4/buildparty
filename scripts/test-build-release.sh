@@ -48,4 +48,15 @@ if PATH="$tmp/bin:$PATH" "$root/scripts/build-release.sh" 2026-09-03.11 "$tmp/re
   exit 1
 fi
 
-echo "Release archive locking, checksum, architecture, and no-overwrite behavior passes."
+cat > "$tmp/bin/mktemp" <<'MOCK'
+#!/bin/sh
+exit 1
+MOCK
+chmod +x "$tmp/bin/mktemp"
+if PATH="$tmp/bin:$PATH" "$root/scripts/build-release.sh" 2026-09-03.12 "$tmp/releases" >/dev/null 2>&1; then
+  echo "mktemp failure unexpectedly succeeded" >&2
+  exit 1
+fi
+[ ! -d "$tmp/releases/.buildparty-2026-09-03.12.lock" ]
+
+echo "Release archive locking, cleanup, checksum, architecture, and no-overwrite behavior passes."

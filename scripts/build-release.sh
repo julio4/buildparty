@@ -20,14 +20,14 @@ checksum="$archive.sha256"
 lock="$output_dir/.buildparty-$release.lock"
 mkdir -p "$output_dir"
 mkdir "$lock" 2>/dev/null || { echo "release is already built or building: $release" >&2; exit 2; }
-tmp=$(mktemp "$output_dir/.buildparty-$release.XXXXXX.tar")
-checksum_tmp="$tmp.sha256"
+tmp=""
+checksum_tmp=""
 owned_archive=false
 owned_checksum=false
 cleanup() {
   status=$?
   trap - EXIT INT TERM
-  rm -f "$tmp" "$checksum_tmp"
+  [ -z "$tmp" ] || rm -f "$tmp" "$checksum_tmp"
   [ "$status" -eq 0 ] || [ "$owned_checksum" != true ] || rm -f "$checksum"
   [ "$status" -eq 0 ] || [ "$owned_archive" != true ] || rm -f "$archive"
   rmdir "$lock" 2>/dev/null || true
@@ -36,6 +36,8 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+tmp=$(mktemp "$output_dir/.buildparty-$release.XXXXXX.tar")
+checksum_tmp="$tmp.sha256"
 [ ! -e "$archive" ] && [ ! -e "$checksum" ] || {
   echo "release already exists: $release" >&2
   exit 2
