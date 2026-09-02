@@ -5,7 +5,7 @@ import {
   parseBearerAuthorization, validateArtifact,
 } from "../src/domain.ts";
 import { renderFinalHtml } from "../src/final-html.ts";
-import { clampSandboxHeight, createSandboxDocument, SANDBOX_DEFAULT_CSS, SANDBOX_MAX_HEIGHT, SANDBOX_MIN_HEIGHT } from "../src/sandbox-document.ts";
+import { clampSandboxAnchorOffset, clampSandboxHeight, createSandboxDocument, SANDBOX_DEFAULT_CSS, SANDBOX_MAX_HEIGHT, SANDBOX_MIN_HEIGHT } from "../src/sandbox-document.ts";
 import { sandboxDocumentIdentity } from "../src/SandboxFrame.tsx";
 
 const artifact = {
@@ -71,6 +71,11 @@ test("sandbox document keeps scripts nonce-only while allowing inline style attr
   assert.match(html, /sandbox|buildParty/);
   assert.match(html, /bp:ready|bp:set|bp:patch|bp:state/);
   assert.match(html, /bp:resize/);
+  assert.match(html, /bp:anchor/);
+  assert.match(html, /closest\('a\[href\]'\)/);
+  assert.match(html, /getAttribute\('href'\)\?\.trim\(\)/);
+  assert.match(html, /scrollIntoView\(\{behavior:'instant',block:'start'\}\)/);
+  assert.match(html, /\}\},true\);/);
   assert.match(html, /ResizeObserver/);
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /default-src 'none'/);
@@ -97,6 +102,7 @@ test("final HTML embeds source and finalized state in interactive opaque frames"
   assert.match(html, /bp:patch/);
   assert.match(html, /bp:state/);
   assert.match(html, /bp:resize/);
+  assert.match(html, /bp:anchor/);
   assert.match(html, /style-src-elem 'nonce-/);
   assert.match(html, /style-src-attr 'unsafe-inline'/);
   assert.match(html, /connect-src 'none'/);
@@ -105,9 +111,13 @@ test("final HTML embeds source and finalized state in interactive opaque frames"
   assert.doesNotMatch(html, /<main><h1>|border-radius:8px|min-height:320px/);
 });
 
-test("sandbox resize heights are finite and clamped", () => {
+test("sandbox resize heights and anchor offsets are finite and clamped", () => {
   assert.equal(clampSandboxHeight(1), SANDBOX_MIN_HEIGHT);
   assert.equal(clampSandboxHeight(321.2), 322);
   assert.equal(clampSandboxHeight(SANDBOX_MAX_HEIGHT + 1), SANDBOX_MAX_HEIGHT);
   for (const value of [undefined, null, "300", 0, -1, NaN, Infinity]) assert.equal(clampSandboxHeight(value), undefined);
+  assert.equal(clampSandboxAnchorOffset(0), 0);
+  assert.equal(clampSandboxAnchorOffset(321.6), 322);
+  assert.equal(clampSandboxAnchorOffset(SANDBOX_MAX_HEIGHT + 1), SANDBOX_MAX_HEIGHT);
+  for (const value of [undefined, null, "300", -1, NaN, Infinity]) assert.equal(clampSandboxAnchorOffset(value), undefined);
 });

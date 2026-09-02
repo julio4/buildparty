@@ -93,22 +93,25 @@ function monitor(page: Page, label: string): Monitor {
 const initialLaunchHtml = `
 <section class="launch-card">
   <p class="kicker">Orbit · Product launch command center</p>
+  <a href=" #launch-details ">Jump to launch details</a>
   <h1>Turn launch day into lift-off.</h1>
   <label>Launch headline<textarea id="headline" rows="3"></textarea></label>
   <label>Voice<select id="tone"><option value="confident">Confident</option><option value="bold">Bold</option><option value="warm">Warm</option></select></label>
   <form id="signup"><label>Waitlist email<input id="email" type="email" placeholder="pilot@example.com"></label><button type="submit">Save test signup</button></form>
   <button id="approve" type="button">Approve launch</button>
   <p id="inlineMarker" style="background:rgb(255, 238, 153);padding:9px">Inline style marker</p>
+  <h2 id="launch-details">Launch details</h2>
   <p id="approvalStatus" role="status"></p><p id="networkStatus" role="status"></p>
 </section>`;
 const revisedLaunchHtml = initialLaunchHtml.replace("Turn launch day into lift-off.", "Meet Orbit: your calmest, clearest launch day.") + "<p class=review-note>Reviewer-approved launch promise.</p>";
-const launchCss = `body{margin:0;font:16px/1.45 system-ui;background:#f5f1ff;color:#251b3f}.launch-card{padding:28px;border:2px solid #6d4aff;border-radius:18px;background:white}label{display:block;margin:14px 0;font-weight:700}textarea,input,select,button{display:block;width:100%;margin-top:6px;padding:10px;font:inherit}button{background:#6d4aff;color:white;border:0;border-radius:9px;font-weight:800}.kicker,.review-note{color:#5b3bd6}`;
+const launchCss = `html{scroll-behavior:smooth}body{margin:0;font:16px/1.45 system-ui;background:#f5f1ff;color:#251b3f}.launch-card{padding:28px;border:2px solid #6d4aff;border-radius:18px;background:white}label{display:block;margin:14px 0;font-weight:700}textarea,input,select,button{display:block;width:100%;margin-top:6px;padding:10px;font:inherit}button{background:#6d4aff;color:white;border:0;border-radius:9px;font-weight:800}.kicker,.review-note{color:#5b3bd6}`;
 const launchJs = `
 const render = state => {
   document.querySelector('#approvalStatus').textContent = 'Approvals: ' + (state.approvals || 0) + (state.submitted ? ' · signup saved' : '');
   document.querySelector('#networkStatus').textContent = 'Network: ' + (state.network || 'not attempted');
 };
 window.buildParty.subscribe(render);
+document.querySelector('a[href]').addEventListener('click', event => event.stopPropagation());
 document.querySelector('#signup').addEventListener('submit', event => { event.preventDefault(); window.buildParty.setState('submitted', true); });
 document.querySelector('#approve').addEventListener('click', () => {
   window.buildParty.setState('approvals', Number(window.buildParty.getState().approvals || 0) + 1);
@@ -224,6 +227,15 @@ test("real golden path: agent build, human review, durable sync, and portable fi
   await expect(collaboratorLaunch.locator("#inlineMarker")).toHaveCSS("background-color", "rgb(255, 238, 153)");
   await expect(collaboratorLaunch.locator("body")).toHaveCSS("background-color", "rgb(245, 241, 255)");
   await expect(collaboratorMetrics.locator("#defaultTable")).toHaveCSS("border-collapse", "collapse");
+  await collaborator.evaluate(() => window.scrollTo(0, 0));
+  await collaboratorLaunch.getByRole("link", { name: "Jump to launch details" }).click();
+  await expect.poll(() => collaborator.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await expect(collaboratorLaunch.locator("#launch-details")).toBeVisible();
+  const anchorTargetBox = await collaboratorLaunch.locator("#launch-details").boundingBox();
+  expect(anchorTargetBox!.y).toBeGreaterThanOrEqual(54);
+  expect(anchorTargetBox!.y).toBeLessThan(844);
+  expect(collaborator.frames().slice(1).map(frame => frame.url())).toEqual(["about:srcdoc", "about:srcdoc"]);
+  expect(new URL(collaborator.url()).hash).toBe(new URL(created.shareUrl).hash);
   await collaborator.locator("#launch-brief").hover();
   await collaboratorLaunch.getByLabel("Launch headline").fill("Meet Orbit: launch with confidence, not chaos.");
   await collaboratorLaunch.getByLabel("Voice").selectOption("bold");
@@ -404,6 +416,10 @@ test("real golden path: agent build, human review, durable sync, and portable fi
   await expect(standaloneLaunch.getByLabel("Voice")).toHaveValue("bold");
   await expect(standaloneLaunch.getByText("Approvals: 1")).toBeVisible();
   await expect(standaloneLaunch.locator("#inlineMarker")).toHaveCSS("background-color", "rgb(255, 238, 153)");
+  await standaloneLaunch.getByRole("link", { name: "Jump to launch details" }).click();
+  await expect(standaloneLaunch.locator("#launch-details")).toBeVisible();
+  expect(standalone.frames().slice(1).map(frame => frame.url())).toEqual(["about:srcdoc"]);
+  await expect(standalone).toHaveURL(standaloneUrl);
   await expect.poll(async () => Math.abs(
     await standaloneLaunchFrame.evaluate(element => element.getBoundingClientRect().height) -
     await standaloneLaunch.locator("html").evaluate(element => element.scrollHeight),

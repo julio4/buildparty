@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import { validateJsonObject, type JsonObject, type JsonValue, type SandboxBlock } from "./domain.ts";
-import { clampSandboxHeight, createSandboxDocument, SANDBOX_MIN_HEIGHT } from "./sandbox-document.ts";
+import { clampSandboxAnchorOffset, clampSandboxHeight, createSandboxDocument, SANDBOX_MIN_HEIGHT } from "./sandbox-document.ts";
 
 const unsafe = new Set(["__proto__", "prototype", "constructor"]);
+const workspaceChromeHeight = 62;
 
 export function SandboxFrame({ block, state, onChange }: { block: SandboxBlock; state: JsonObject; onChange: (state: JsonObject) => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
@@ -20,6 +21,11 @@ export function SandboxFrame({ block, state, onChange }: { block: SandboxBlock; 
       if (event.data.type === "bp:resize") {
         const height = clampSandboxHeight(event.data.height);
         if (height && frame.current && frame.current.height !== String(height)) frame.current.height = String(height);
+        return;
+      }
+      if (event.data.type === "bp:anchor") {
+        const offset = clampSandboxAnchorOffset(event.data.offset);
+        if (offset !== undefined && frame.current) window.scrollTo({ top: Math.max(0, window.scrollY + frame.current.getBoundingClientRect().top + offset - workspaceChromeHeight) });
         return;
       }
       try {

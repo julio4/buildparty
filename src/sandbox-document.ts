@@ -10,6 +10,10 @@ export function clampSandboxHeight(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.min(SANDBOX_MAX_HEIGHT, Math.max(SANDBOX_MIN_HEIGHT, Math.ceil(value))) : undefined;
 }
 
+export function clampSandboxAnchorOffset(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.min(SANDBOX_MAX_HEIGHT, Math.round(value)) : undefined;
+}
+
 export function createSandboxDocument(block: SandboxBlock, channel: string, nonce: string): string {
   const source = scriptJson(block.source);
   const identity = scriptJson({ blockId: block.id, channel });
@@ -27,6 +31,7 @@ const bind=()=>document.querySelectorAll('input,select,textarea').forEach(contro
 window.buildParty={getState:()=>clone(state),setState:(name,value)=>{if(path(name)&&valid(value)&&JSON.stringify(value).length<=100000)send({type:'bp:set',path:name,value});},patchState:patch=>{if(valid(patch)&&patch&&!Array.isArray(patch)&&typeof patch==='object'&&JSON.stringify(patch).length<=100000)send({type:'bp:patch',patch});},subscribe:listener=>{if(typeof listener!=='function')throw new TypeError('listener must be a function');listeners.add(listener);return()=>listeners.delete(listener);}};
 addEventListener('message',event=>{const message=event.data;if(event.source===parent&&message?.type==='bp:state'&&message.channel===identity.channel)publish(message.state);});
 addEventListener('input',event=>{const control=event.target;if(!(control instanceof HTMLInputElement||control instanceof HTMLSelectElement||control instanceof HTMLTextAreaElement)||control.hasAttribute('data-bp-local'))return;const name=control.getAttribute('name')||control.id;if(!path(name)||(control instanceof HTMLInputElement&&control.type==='radio'&&!control.checked))return;const value=control instanceof HTMLInputElement&&control.type==='checkbox'?control.checked:control.value;window.buildParty.setState(name,value);});
+addEventListener('click',event=>{const anchor=event.target instanceof Element?event.target.closest('a[href]'):null,href=anchor?.getAttribute('href')?.trim();if(!href?.startsWith('#'))return;event.preventDefault();let id;try{id=decodeURIComponent(href.slice(1));}catch{return;}const target=id?(document.getElementById(id)||document.getElementsByName(id)[0]):document.documentElement;if(target){target.scrollIntoView({behavior:'instant',block:'start'});send({type:'bp:anchor',offset:id?Math.max(0,target.getBoundingClientRect().top):0});}},true);
 const style=document.createElement('style');style.nonce=${scriptJson(nonce)};style.textContent=source.css||'';document.head.append(style);document.getElementById('buildparty-root').innerHTML=source.html;bind();new ResizeObserver(scheduleSize).observe(document.documentElement);new ResizeObserver(scheduleSize).observe(document.getElementById('buildparty-root'));scheduleSize();send({type:'bp:ready'});
 })()</script><script nonce="${nonce}">${escapeScript(block.source.js ?? "")}</script></body></html>`;
 }
