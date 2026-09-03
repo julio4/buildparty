@@ -54,7 +54,7 @@ function expectedRequest(raw: string) {
   const url = new URL(raw);
   if (["file:", "blob:", "data:", "about:"].includes(url.protocol)) return true;
   if (url.origin !== appOrigin) return false;
-  return url.pathname.startsWith("/api/") || url.pathname === "/" || url.pathname === "/@react-refresh" || url.pathname.startsWith("/party/") || /^\/(?:@vite|src|node_modules)\//.test(url.pathname);
+  return url.pathname.startsWith("/api/") || url.pathname === "/" || url.pathname === "/clouds.webp" || url.pathname === "/@react-refresh" || url.pathname.startsWith("/party/") || /^\/(?:@vite|src|node_modules)\//.test(url.pathname);
 }
 
 function monitor(page: Page, label: string): Monitor {
@@ -153,7 +153,7 @@ test("real golden path: agent build, human review, durable sync, and portable fi
   const collaboratorMonitor = monitor(collaborator, "collaborator");
 
   await host.goto("/");
-  await expect(host.getByRole("heading", { name: "Build together." })).toBeVisible();
+  await expect(host.getByRole("heading", { name: "Build Party: a space for human and agents" })).toBeVisible();
   await expect(host.locator('link[rel="icon"]')).toHaveAttribute("href", /^data:image\/svg\+xml,/);
   expect(await holdNativeTools(host)).toEqual(publicTools);
   const init = await callTool<ToolResult>(host, "init", { displayName: "Orbit launch agent" });
@@ -258,9 +258,11 @@ test("real golden path: agent build, human review, durable sync, and portable fi
   const canvasWidth = (await collaborator.locator(".artifact-canvas").boundingBox())!.width;
   await collaborator.getByRole("button", { name: /Review Launch brief/ }).click();
   await expect(collaborator.locator(".review-panel")).toBeVisible();
+  await expect(collaborator.locator(".feedback-pin").first()).toBeHidden();
   await expect(collaborator.getByRole("button", { name: "Close review" })).toBeFocused();
   await collaborator.keyboard.press("Escape");
   await expect(collaborator.locator(".review-panel")).toBeHidden();
+  await expect(collaborator.locator(".feedback-pin").first()).toBeVisible();
   await expect(collaborator.getByRole("button", { name: /Review Launch brief/ })).toBeFocused();
   await collaborator.getByRole("button", { name: /Review Launch brief/ }).click();
   const sheet = (await collaborator.locator(".review-panel").boundingBox())!;
@@ -329,7 +331,7 @@ test("real golden path: agent build, human review, durable sync, and portable fi
   await collaborator.locator(".review-panel").evaluate(element => { element.scrollTop = 0; });
   await collaborator.screenshot({ path: `${artifactsDir}/workspace-narrow.png` });
 
-  if (!await host.locator(".review-panel").count()) await host.getByRole("button", { name: /Review$/ }).click();
+  if (!await host.locator(".review-panel").isVisible()) await host.getByRole("button", { name: /Review$/ }).click();
   await host.locator(".review-panel summary", { hasText: /revision/ }).click();
   await expect(host.getByRole("button", { name: "Restore revision v2" })).toBeVisible();
   await host.screenshot({ path: `${artifactsDir}/workspace-desktop.png` });
